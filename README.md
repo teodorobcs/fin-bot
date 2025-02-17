@@ -1,12 +1,12 @@
 # NetSuite AI Chatbot
 
-🚀 **NetSuite AI Chatbot** is an intelligent assistant designed to automate NetSuite workflows, answer queries, and improve user efficiency. This tool leverages AI and API integrations to streamline financial operations within NetSuite.
+**NetSuite AI Chatbot** is an intelligent assistant designed to automate NetSuite workflows, answer queries, and improve user efficiency. This tool leverages AI and API integrations to streamline financial operations within NetSuite.
 
 ## Features
-- 🔹 AI-powered chatbot for NetSuite automation  
-- 🔹 Handles user queries and executes NetSuite actions  
-- 🔹 API integration for seamless data retrieval  
-- 🔹 Scalable and customizable for business needs  
+- AI-powered chatbot for NetSuite automation  
+- Handles user queries and executes NetSuite actions  
+- API integration for seamless data retrieval  
+- Scalable and customizable for business needs  
 
 ## Installation
 (Currently, this project is private. Instructions will be added later.)
@@ -21,4 +21,4 @@ This project is **proprietary** and not available for public use or modification
 
 ---
 
-💡 **Future Updates:** More details on API integration, setup guides, and monetization options will be added soon!
+**Future Updates:** More details on API integration, setup guides, and monetization options will be added soon!
