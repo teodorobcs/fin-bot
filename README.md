@@ -17,7 +17,7 @@
 - More documentation will be provided upon release.
 
 ## License
-This project is **proprietary** and not available for public use or modification. If you're interested in commercial licensing, please contact [Your Email].
+This project is **proprietary** and not available for public use or modification. If you're interested in commercial licensing, please get in touch with teodoro.bcs@gmail.com.
 
 ---
 
