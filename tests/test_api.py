@@ -1,4 +1,4 @@
-import fetch_data as fd
+from app import fetch_data as fd
 
 endpoint = "invoice"
 

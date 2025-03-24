@@ -33,13 +33,13 @@ Below is a table that outlines the primary endpoints, their descriptions, and ex
 Below is a sample code snippet demonstrating how to use the `fetch_data` function to retrieve data from one of the endpoints (in this case, the employee endpoint):
 
 ```python
-from fetch_data import fetch_data
+from api.app import fetch_data
 
 data = fetch_data("employee")
 if data:
-    print("Employee data retrieved successfully!")
+  print("Employee data retrieved successfully!")
 else:
-    print("Error retrieving employee data. Please check logs for details.")
+  print("Error retrieving employee data. Please check logs for details.")
 ```
 ## Error Handling & Debugging
 

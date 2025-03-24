@@ -1,13 +1,12 @@
 import requests
 from requests_oauthlib import OAuth1
-import os
 from dotenv import load_dotenv
-from logger import logger
+from .logger import logger
 
 # Load environment variables
 load_dotenv()
 
-from config import (
+from app.config import (
     NETSUITE_ACCOUNT,
     NETSUITE_ACCOUNT_URL,
     CONSUMER_KEY,

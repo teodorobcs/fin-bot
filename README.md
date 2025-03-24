@@ -22,3 +22,15 @@ This project is **proprietary** and not available for public use or modification
 ---
 
 **Future Updates:** More details on API integration, setup guides, and monetization options will be added soon!
+
+# 🧠 FinBot
+
+A financial assistant that connects to NetSuite, stores data in PostgreSQL, and allows chatbot querying.
+
+## 🔧 Setup
+
+- Python 3.12 via Conda
+- Install dependencies:
+```bash
+conda env create -f environment.yml
+conda activate fb_env
