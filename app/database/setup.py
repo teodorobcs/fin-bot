@@ -1,11 +1,10 @@
 from connection import connect_db
 
 def create_tables():
-    """Creates tables for NetSuite data: employees, customers, vendors, transactions, accounts, subsidiaries, etc."""
     conn = connect_db()
     cur = conn.cursor()
 
-    # Subsidiaries Table
+    # Subsidiaries
     cur.execute("""
     CREATE TABLE IF NOT EXISTS subsidiaries (
         id SERIAL PRIMARY KEY,
@@ -15,10 +14,10 @@ def create_tables():
         currency TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE INDEX IF NOT EXISTS idx_subsidiaries_netsuite_id ON subsidiaries(netsuite_id);
     """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_subsidiaries_netsuite_id ON subsidiaries(netsuite_id);")
 
-    # Employees Table
+    # Employees
     cur.execute("""
     CREATE TABLE IF NOT EXISTS employees (
         id SERIAL PRIMARY KEY,
@@ -32,11 +31,12 @@ def create_tables():
         last_modified TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE INDEX IF NOT EXISTS idx_employees_netsuite_id ON employees(netsuite_id);
-    CREATE INDEX IF NOT EXISTS idx_employees_email ON employees(email);
     """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_employees_netsuite_id ON employees(netsuite_id);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_employees_email ON employees(email);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_employees_subsidiary_id ON employees(subsidiary_id);")
 
-    # Customers Table
+    # Customers
     cur.execute("""
     CREATE TABLE IF NOT EXISTS customers (
         id SERIAL PRIMARY KEY,
@@ -45,15 +45,16 @@ def create_tables():
         company TEXT,
         email TEXT UNIQUE,
         phone TEXT,
-        subsidiary_id INT REFERENCES subsidiaries(netsuite_id),
+        subsidiary_id INT NOT NULL REFERENCES subsidiaries(netsuite_id),
         status TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE INDEX IF NOT EXISTS idx_customers_netsuite_id ON customers(netsuite_id);
-    CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
     """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_customers_netsuite_id ON customers(netsuite_id);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_customers_subsidiary_id ON customers(subsidiary_id);")
 
-    # Vendors Table
+    # Vendors
     cur.execute("""
     CREATE TABLE IF NOT EXISTS vendors (
         id SERIAL PRIMARY KEY,
@@ -64,10 +65,11 @@ def create_tables():
         subsidiary_id INT REFERENCES subsidiaries(netsuite_id),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE INDEX IF NOT EXISTS idx_vendors_netsuite_id ON vendors(netsuite_id);
     """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_vendors_netsuite_id ON vendors(netsuite_id);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_vendors_subsidiary_id ON vendors(subsidiary_id);")
 
-    # Accounts Table
+    # Accounts
     cur.execute("""
     CREATE TABLE IF NOT EXISTS accounts (
         id SERIAL PRIMARY KEY,
@@ -78,11 +80,12 @@ def create_tables():
         subsidiary_id INT REFERENCES subsidiaries(netsuite_id),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE INDEX IF NOT EXISTS idx_accounts_netsuite_id ON accounts(netsuite_id);
-    CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(account_type);
     """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_accounts_netsuite_id ON accounts(netsuite_id);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(account_type);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_accounts_subsidiary_id ON accounts(subsidiary_id);")
 
-    # Transactions Table
+    # Transactions
     cur.execute("""
     CREATE TABLE IF NOT EXISTS transactions (
         id SERIAL PRIMARY KEY,
@@ -101,13 +104,15 @@ def create_tables():
         last_modified TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE INDEX IF NOT EXISTS idx_transactions_netsuite_id ON transactions(netsuite_id);
-    CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
-    CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(transaction_type);
-    CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);
     """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_netsuite_id ON transactions(netsuite_id);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(transaction_type);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_customer_id ON transactions(customer_id);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_vendor_id ON transactions(vendor_id);")
 
-    # API Sync Status Table
+    # API Sync Status
     cur.execute("""
     CREATE TABLE IF NOT EXISTS api_sync_status (
         id SERIAL PRIMARY KEY,
@@ -116,13 +121,13 @@ def create_tables():
         status TEXT CHECK (status IN ('Success', 'Failed')),
         error_message TEXT
     );
-    CREATE INDEX IF NOT EXISTS idx_sync_status_entity ON api_sync_status(entity);
     """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_sync_status_entity ON api_sync_status(entity);")
 
     conn.commit()
     cur.close()
     conn.close()
-    print("✅ Database setup complete!")
+    print("Database setup complete!")
 
 if __name__ == "__main__":
     create_tables()
