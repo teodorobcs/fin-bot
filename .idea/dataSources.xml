@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="finbot-db" uuid="4409c9e3-da4d-4e58-ba97-17f15991b204">
+    <data-source source="LOCAL" name="finbot" uuid="3e86c675-d534-4975-af90-2ef45a010019">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://34.23.41.58:5432/postgres</jdbc-url>
+      <jdbc-url>jdbc:postgresql://34.23.41.58:5432/finbot</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

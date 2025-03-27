@@ -1,7 +1,7 @@
 import requests
 from requests_oauthlib import OAuth1
 from dotenv import load_dotenv
-from .logger import logger
+from app.logger import logger
 
 # Load environment variables
 load_dotenv()
