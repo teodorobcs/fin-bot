@@ -4,125 +4,122 @@ def create_tables():
     conn = connect_db()
     cur = conn.cursor()
 
-    # Subsidiaries
+    # Subsidiaries - reviewed 2025-04-03
     cur.execute("""
     CREATE TABLE IF NOT EXISTS subsidiaries (
         id SERIAL PRIMARY KEY,
-        netsuite_id INT UNIQUE NOT NULL,
+        ns_internalId TEXT UNIQUE NOT NULL,
         name TEXT NOT NULL,
-        country TEXT,
+        state TEXT,
         currency TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_subsidiaries_netsuite_id ON subsidiaries(netsuite_id);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_subsidiaries_ns_internalId ON subsidiaries(ns_internalId);")
 
-    # Employees
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS employees (
-        id SERIAL PRIMARY KEY,
-        netsuite_id INT UNIQUE,
-        name TEXT NOT NULL,
-        title TEXT,
-        department TEXT,
-        email TEXT UNIQUE,
-        subsidiary_id INT REFERENCES subsidiaries(netsuite_id),
-        active BOOLEAN DEFAULT TRUE,
-        last_modified TIMESTAMP,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    """)
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_employees_netsuite_id ON employees(netsuite_id);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_employees_email ON employees(email);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_employees_subsidiary_id ON employees(subsidiary_id);")
-
-    # Customers
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS customers (
-        id SERIAL PRIMARY KEY,
-        netsuite_id INT UNIQUE,
-        name TEXT NOT NULL,
-        company TEXT,
-        email TEXT UNIQUE,
-        phone TEXT,
-        subsidiary_id INT NOT NULL REFERENCES subsidiaries(netsuite_id),
-        status TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    """)
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_customers_netsuite_id ON customers(netsuite_id);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_customers_subsidiary_id ON customers(subsidiary_id);")
-
-    # Vendors
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS vendors (
-        id SERIAL PRIMARY KEY,
-        netsuite_id INT UNIQUE,
-        name TEXT NOT NULL,
-        email TEXT,
-        phone TEXT,
-        subsidiary_id INT REFERENCES subsidiaries(netsuite_id),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    """)
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_vendors_netsuite_id ON vendors(netsuite_id);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_vendors_subsidiary_id ON vendors(subsidiary_id);")
-
-    # Accounts
+    # Accounts - reviewed and updated 2025-04-27
     cur.execute("""
     CREATE TABLE IF NOT EXISTS accounts (
         id SERIAL PRIMARY KEY,
-        netsuite_id INT UNIQUE NOT NULL,
-        name TEXT NOT NULL,
-        account_number TEXT,
-        account_type TEXT CHECK (account_type IN ('Asset', 'Liability', 'Equity', 'Revenue', 'Expense')),
-        subsidiary_id INT REFERENCES subsidiaries(netsuite_id),
+        ns_internalId TEXT UNIQUE NOT NULL,
+        acctName TEXT NOT NULL,
+        acctNumber TEXT,
+        acctType TEXT,  -- changed from INT to TEXT, no CHECK constraint
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_accounts_netsuite_id ON accounts(netsuite_id);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_accounts_type ON accounts(account_type);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_accounts_subsidiary_id ON accounts(subsidiary_id);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_accounts_ns_internalId ON accounts(ns_internalId);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_accounts_acctType ON accounts(acctType);")
 
-    # Transactions
+    # Employees - reviewed 2025-04-27
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS transactions (
+    CREATE TABLE IF NOT EXISTS employees (
         id SERIAL PRIMARY KEY,
-        netsuite_id INT UNIQUE NOT NULL,
-        transaction_type TEXT NOT NULL,
-        transaction_number TEXT,
-        reference_number TEXT,
-        amount DECIMAL(12,2) NOT NULL,
-        currency TEXT,
-        date TIMESTAMP NOT NULL,
-        customer_id INT REFERENCES customers(netsuite_id) ON DELETE SET NULL,
-        vendor_id INT REFERENCES vendors(netsuite_id) ON DELETE SET NULL,
-        account_id INT REFERENCES accounts(netsuite_id),
-        status TEXT,
-        memo TEXT,
+        ns_internalId TEXT UNIQUE NOT NULL,
+        accountNumber TEXT,
+        firstName TEXT NOT NULL,
+        lastName TEXT NOT NULL,
+        title TEXT,
+        subsidiary_id TEXT REFERENCES subsidiaries(ns_internalId), -- Connection
+        subsidiary_name TEXT, -- Display name
         last_modified TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_netsuite_id ON transactions(netsuite_id);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(transaction_type);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_customer_id ON transactions(customer_id);")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_transactions_vendor_id ON transactions(vendor_id);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_employees_ns_internalId ON employees(ns_internalId);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_employees_subsidiary_id ON employees(subsidiary_id);")
 
-    # API Sync Status
+    # Customers - reviewed 2025-04-28
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS api_sync_status (
+    CREATE TABLE IF NOT EXISTS customers (
+        id SERIAL PRIMARY KEY,
+        ns_internalId TEXT UNIQUE NOT NULL,
+        clientName TEXT NOT NULL,
+        clientEmail TEXT,
+        subsidiary_id TEXT NOT NULL REFERENCES subsidiaries(ns_internalId),
+        subsidiary_name TEXT,
+        startDate TIMESTAMP,
+        endDate TIMESTAMP,
+        terms TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_customers_ns_internalId ON customers(ns_internalId);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_customers_clientEmail ON customers(clientEmail);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_customers_subsidiary_id ON customers(subsidiary_id);")
+
+    # Vendors - reviewed 2025-04-28
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS vendors (
+        id SERIAL PRIMARY KEY,
+        ns_internalId TEXT UNIQUE NOT NULL,
+        vendorName TEXT NOT NULL,
+        email TEXT,
+        phone TEXT,
+        subsidiary_id TEXT REFERENCES subsidiaries(ns_internalId),
+        subsidiary_name TEXT,
+        isperson BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_vendors_ns_internalId ON vendors(ns_internalId);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_vendors_subsidiary_id ON vendors(subsidiary_id);")
+
+    # Invoices - reviewed 2025-04-29
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS invoices (
+        id SERIAL PRIMARY KEY,
+        ns_internalId TEXT UNIQUE NOT NULL,
+        amountPaid DECIMAL(12,2),
+        amountRemaining DECIMAL(12,2),
+        customer_id TEXT REFERENCES customers(ns_internalId) ON DELETE SET NULL,
+        customer_name TEXT,
+        tranid TEXT,
+        tranDate DATE NOT NULL,
+        dueDate DATE,
+        terms TEXT,
+        total DECIMAL(12,2) NOT NULL,
+        status TEXT,
+        subsidiary_id TEXT NOT NULL REFERENCES subsidiaries(ns_internalId),
+        subsidiary_name TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_invoices_ns_internalId ON invoices(ns_internalId);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_invoices_tranDate ON invoices(tranDate);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_invoices_subsidiary_id ON invoices(subsidiary_id);")
+
+    """# API Sync Status - reviewed 2025-04-29
+    cur.execute("""
+    """CREATE TABLE IF NOT EXISTS api_sync_status (
         id SERIAL PRIMARY KEY,
         entity TEXT,
         last_sync TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         status TEXT CHECK (status IN ('Success', 'Failed')),
         error_message TEXT
-    );
+    );"""
     """)
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_sync_status_entity ON api_sync_status(entity);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_sync_status_entity ON api_sync_status(entity);")"""
 
     conn.commit()
     cur.close()

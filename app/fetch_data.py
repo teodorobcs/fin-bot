@@ -17,9 +17,8 @@ from app.config import (
 
 # Function to fetch data from NetSuite API
 def fetch_data(endpoint):
-    """Fetches data from NetSuite API and logs response status."""
-
-    url = f"https://{NETSUITE_ACCOUNT_URL}.suitetalk.api.netsuite.com/services/rest/record/v1/{endpoint}" # Endpoint URL variable
+    """Fetches full data from NetSuite API, including detailed records for list-based endpoints."""
+    base_url = f"https://{NETSUITE_ACCOUNT_URL}.suitetalk.api.netsuite.com/services/rest/record/v1/{endpoint}"
     auth = OAuth1(
         CONSUMER_KEY,
         CONSUMER_SECRET,
@@ -27,17 +26,30 @@ def fetch_data(endpoint):
         TOKEN_SECRET,
         signature_method="HMAC-SHA256",
         signature_type="AUTH_HEADER",
-        realm=NETSUITE_ACCOUNT  # THIS MUST BE HERE!!!
+        realm=NETSUITE_ACCOUNT
     )
 
     try:
-        response = requests.get(url, auth=auth)
-        response.raise_for_status() # Raise error for non-200 responses
+        response = requests.get(base_url, auth=auth)
+        response.raise_for_status()
+        data = response.json()
+        logger.info(f"Success: Retrieved list from {endpoint}. Status code: {response.status_code}")
 
-        logger.info(f"Success: Retrieved {endpoint} data. Status code: {response.status_code}")
-        return response.json()
+        # If only IDs are returned, fetch full records
+        if "items" in data and all("id" in item and "links" in item and len(item) <= 2 for item in data["items"]):
+            full_items = []
+            for item in data["items"]:
+                item_id = item["id"]
+                detail_url = f"{base_url}/{item_id}"
+                detail_resp = requests.get(detail_url, auth=auth)
+                if detail_resp.status_code == 200:
+                    full_items.append(detail_resp.json())
+                else:
+                    logger.warning(f"Failed to fetch full record for {endpoint} ID {item_id}. Status: {detail_resp.status_code}. Body: {detail_resp.text}")
+            return {"items": full_items}
+        else:
+            return data
 
-    # Error handling
     except requests.exceptions.RequestException as err:
-        logger.error(f"Error: {err} - Endpoint: {endpoint}")
-        return None # Return non if an error occurs
+        logger.error(f"Error fetching {endpoint}: {err}")
+        return None
