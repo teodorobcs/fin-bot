@@ -8,7 +8,8 @@ def get_invoices(
     subsidiary: str = Query(None, description="Filter by subsidiary name"),
     customer: str = Query(None, description="Filter by customer name"),
     start_date: str = Query(None, description="Start date (YYYY-MM-DD)"),
-    end_date: str = Query(None, description="End date (YYYY-MM-DD)")
+    end_date: str = Query(None, description="End date (YYYY-MM-DD)"),
+    status: str = Query(None, description="Filter by invoice status (e.g. 'Open')")
 ):
     # Connect to the database
     conn = connect_db()
@@ -31,6 +32,15 @@ def get_invoices(
         query += " AND customer_name = %s"
         params.append(customer)
 
+    if status:
+        if status.lower() == "open":
+            query += " AND amountRemaining > 0"
+        elif status.lower() in ("paid", "paid in full"):
+            query += " AND amountRemaining = 0"
+        else:
+            query += " AND status = %s"
+            params.append(status)
+
     if start_date:
         query += " AND tranDate >= %s"
         params.append(start_date)
@@ -38,6 +48,8 @@ def get_invoices(
     if end_date:
         query += " AND tranDate <= %s"
         params.append(end_date)
+
+    query += " ORDER BY tranDate DESC"
 
     # Execute query
     cur.execute(query, params)
