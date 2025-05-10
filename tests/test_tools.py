@@ -1,63 +1,67 @@
-import logging
-import os
-from pathlib import Path
+"""
+Unit-tests for app.chat.tools using pytest + unittest.mock.patch.
+Each test stubs out requests.get so we don’t hit the real NetSuite API.
+"""
 
-logs_dir = Path(os.getenv("LOGS_DIR", "logs"))
-logs_dir.mkdir(parents=True, exist_ok=True)
+from unittest.mock import patch
+from requests.exceptions import RequestException
+from app.chat import tools
 
-logger = logging.getLogger(__name__)
+
+# ───────────────────────── get_invoices ────────────────────────── #
+
+@patch("app.chat.tools.requests.get")
+def test_get_invoices_success(mock_get):
+    mock_resp = mock_get.return_value
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = [
+        {"status": "Open", "amountRemaining": 1000.0}
+    ]
+
+    data = tools.get_invoices(status="Open")
+
+    assert isinstance(data, list)
+    assert data[0]["status"] == "Open"
 
 
-# -------- CHATBOT INTERACTION AUDIT LOGGER -------- #
-#
-# This lightweight helper writes each chatbot turn as a single JSON
-# object on its own line.  Use `tail -f` or `jq -c` to inspect, or ship
-# to Postgres/ClickHouse later.
-#
-# Fields:
-#   ts      – ISO‑8601 UTC timestamp
-#   user_id – caller id the API route passes in
-#   query   – raw user prompt
-#   tool    – tool name OpenAI decided to call (or None / "error")
-#   args    – arguments passed to the tool
-#   result  – raw tool result (truncated in UI, full in log)
-#   reply   – final assistant message returned to the caller
-#
-# --------------------------------------------------------------------
+@patch("app.chat.tools.requests.get")
+def test_get_invoices_empty(mock_get):
+    mock_resp = mock_get.return_value
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = []
 
-import json
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Dict
+    data = tools.get_invoices()
+    assert data == []
 
-# Chat log path defaults to logs/chatbot_interactions.jsonl at repo root.
-CHAT_LOG_PATH = Path(
-    os.getenv("CHATBOT_LOG_PATH", os.path.join(logs_dir, "chatbot_interactions.jsonl"))
-)
-CHAT_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-def _utc_now_iso() -> str:
-    """Return current UTC time in ISO‑8601 with milliseconds."""
-    return datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+@patch("app.chat.tools.requests.get")
+def test_get_invoices_failure(mock_get):
+    mock_get.side_effect = RequestException("connection error")
 
-def log_interaction(
-    *,
-    user_id: str,
-    query: str,
-    tool: str | None,
-    args: Dict[str, Any] | None,
-    result: Any | None,
-    reply: str,
-) -> None:
-    """Append one chatbot interaction to the JSONL audit file."""
-    entry = {
-        "ts": _utc_now_iso(),
-        "user_id": user_id,
-        "query": query,
-        "tool": tool,
-        "args": args,
-        "result": result,
-        "reply": reply,
-    }
-    with CHAT_LOG_PATH.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    result = tools.get_invoices(status="Open")
+
+    assert "error" in result
+    assert result["status_code"] is None
+
+
+# ───────────────────────── get_ar_balance ──────────────────────── #
+
+@patch("app.chat.tools.requests.get")
+def test_get_ar_balance_success(mock_get):
+    mock_resp = mock_get.return_value
+    mock_resp.status_code = 200
+    mock_resp.json.return_value = {"subsidiary_totals": 5}
+
+    data = tools.get_ar_balance(group_by="subsidiary")
+
+    assert isinstance(data, dict)
+    assert "subsidiary_totals" in data
+
+
+@patch("app.chat.tools.requests.get")
+def test_get_ar_balance_failure(mock_get):
+    mock_get.side_effect = RequestException("API down")
+
+    data = tools.get_ar_balance(group_by="customer")
+
+    assert "error" in data
