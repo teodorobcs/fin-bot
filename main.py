@@ -1,18 +1,21 @@
-# main.py
-
+# api/main.py
 from fastapi import FastAPI
+from api import core
+from api.routes import chatbot
 from api.routes import invoices, ar_balance  # import from the correct subfolder
+app = FastAPI(title="FinBot API")
 
-app = FastAPI(
-    title="NetSuite Financial API",
-    description="Expose invoice and AR data from your local database.",
-    version="0.1.0"
-)
-
-# Include your endpoint routers
+# Add all routers
+app.include_router(core.router)
+app.include_router(chatbot.router, prefix="/api")
 app.include_router(invoices.router)
 app.include_router(ar_balance.router)
 
+# Optional: root route
 @app.get("/")
-def read_root():
-    return {f"message": "Welcome to the NetSuite Financial API"}
+async def root():
+    return {"message": "FinBot is Running!"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("api.app:app", host="127.0.0.1", port=8000, reload=True)

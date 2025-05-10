@@ -22,8 +22,8 @@ def get_invoices(subsidiary=None, customer=None, status=None):
     except requests.RequestException as e:
         return {
             "error": f"Failed to fetch invoices: {str(e)}",
-            "status_code": response.status_code if 'response' in locals() else None,
-            "details": response.text if 'response' in locals() else None
+            "status_code": getattr(e.response, "status_code", None),
+            "details": getattr(e.response, "text", None)
         }
 
 
@@ -38,6 +38,7 @@ def get_ar_balance(group_by="subsidiary", status=None):
     if status:
         params["status"] = status
 
+    response = None  # Initialize to avoid NameError if request fails
     try:
         response = requests.get(f"{API_BASE_URL}/ar-balance", params=params)
         response.raise_for_status()
@@ -45,6 +46,6 @@ def get_ar_balance(group_by="subsidiary", status=None):
     except requests.RequestException as e:
         return {
             "error": f"Failed to fetch AR balance: {str(e)}",
-            "status_code": response.status_code if 'response' in locals() else None,
-            "details": response.text if 'response' in locals() else None
+            "status_code": response.status_code if response else None,
+            "details": response.text if response else None
         }
