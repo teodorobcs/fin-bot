@@ -3,7 +3,21 @@ from fastapi import FastAPI
 from api import core
 from api.routes import chatbot
 from api.routes import invoices, ar_balance  # import from the correct subfolder
+from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI(title="FinBot API")
+
+origins = [
+    "http://localhost:5173",    # Vite default
+    "http://127.0.0.1:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Add all routers
 app.include_router(core.router)
