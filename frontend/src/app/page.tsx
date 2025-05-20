@@ -1,3 +1,5 @@
+// frontend/src/page.tsx
+
 'use client';
 
 import { useEffect, useRef, useState, KeyboardEvent } from 'react';
@@ -90,13 +92,14 @@ export default function ChatPage() {
                         ul: ({ node, ...props }) => (
                           <ul className="list-disc pl-6 space-y-1" {...props} />
                         ),
-                        li: ({ node, ...props }) =>
-                          // Skip li that contains only whitespace (ghost bullet)
-                          node.children.length === 1 &&
-                          node.children[0].type === 'text' &&
-                          !node.children[0].value.trim() ? null : (
-                            <li {...props} />
-                          ),
+                        li: ({ node, ...props }: any) => {
+                          const onlyWhitespace =
+                            node.children.length === 1 &&
+                            node.children[0].type === 'text' &&
+                            !node.children[0].value.trim();
+
+                          return onlyWhitespace ? null : <li {...props} />;
+                        },
                         /* tight paragraphs */
                         p: ({ node, ...props }) => <p className="mb-1" {...props} />,
                       }}
