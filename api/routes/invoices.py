@@ -1,3 +1,4 @@
+# api/routes/invoices.py
 from fastapi import APIRouter, Query
 from app.database.connection import connect_db
 
@@ -17,7 +18,7 @@ def get_invoices(
 
     # Base query
     query = """
-        SELECT ns_internalId, customer_name, subsidiary_name, total, amountRemaining, status, tranDate
+        SELECT tranid, customer_name, subsidiary_name, total, amountRemaining, status, tranDate, total, duedate, terms
         FROM invoices
         WHERE 1=1
     """

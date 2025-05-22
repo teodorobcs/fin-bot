@@ -70,7 +70,7 @@ def chat_with_gpt(request: ChatRequest):
     try:
         today_str = date.today().strftime("%B %d, %Y")
         response = client.chat.completions.create(
-            model="gpt-4-turbo-2024-04-09",
+            model="gpt-4o-mini",
             messages=[
                 {
                     "role": "system",

@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState, KeyboardEvent } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import ARAgingTable from "@/app/components/ARAgingTable";
 
 type Turn = { role: 'user' | 'bot'; text: string };
 
@@ -77,35 +78,51 @@ export default function ChatPage() {
           <div className="flex flex-col w-full max-w-5xl mx-auto h-full">
             {/* Chat log */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {/* Chat response formatting */}
               {history.map((t, i) =>
                 t.role === 'user' ? (
                   <div key={i} className="text-right">{t.text}</div>
                 ) : (
-                  <div
-                    key={i}
-                    className="bg-finbot-reply text-gray-100 p-4 rounded whitespace-pre-wrap leading-none"
-                  >
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        /* ✪ NEW — style lists & skip empty bullet nodes */
-                        ul: ({ node, ...props }) => (
-                          <ul className="list-disc pl-6 space-y-1" {...props} />
-                        ),
-                        li: ({ node, ...props }: any) => {
-                          const onlyWhitespace =
-                            node.children.length === 1 &&
-                            node.children[0].type === 'text' &&
-                            !node.children[0].value.trim();
+                  <div key={i} className="bg-finbot-reply text-gray-100 p-4 rounded">
+                    {(() => {
+                      try {
+                        const parsed = JSON.parse(t.text);
+                        if (parsed?.data && Array.isArray(parsed.data)) {
+                          return (
+                            <>
+                              <div className="mb-2 font-bold text-lg">
+                                AR Aging Summary (as of {parsed.as_of_date})
+                              </div>
+                              <ARAgingTable rows={parsed.data} />
+                            </>
+                          );
+                        }
+                      } catch {
+                        // Not JSON
+                      }
 
-                          return onlyWhitespace ? null : <li {...props} />;
-                        },
-                        /* tight paragraphs */
-                        p: ({ node, ...props }) => <p className="mb-1" {...props} />,
-                      }}
-                    >
-                      {t.text.trim()}
-                    </ReactMarkdown>
+                      return (
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            ul: ({ node, ...props }) => (
+                              <ul className="list-disc pl-6 space-y-1" {...props} />
+                            ),
+                            li: ({ node, ...props }: any) => {
+                              const onlyWhitespace =
+                                node.children.length === 1 &&
+                                node.children[0].type === 'text' &&
+                                !node.children[0].value.trim();
+
+                              return onlyWhitespace ? null : <li {...props} />;
+                            },
+                            p: ({ node, ...props }) => <p className="mb-1" {...props} />,
+                          }}
+                        >
+                          {t.text?.trim?.() || ''}
+                        </ReactMarkdown>
+                      );
+                    })()}
                   </div>
                 ),
               )}
